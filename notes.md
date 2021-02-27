@@ -19,6 +19,7 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 
 # Use Helm to deploy an NGINX ingress controller
 helm install nginx-ingress ingress-nginx/ingress-nginx \
+    --version 3.23.0 \
     --namespace ingress-basic \
     --set controller.replicaCount=2 \
     --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \
@@ -257,14 +258,14 @@ step certificate create identity.linkerd.cluster.local issuer.crt issuer.key --c
 linkerd install --identity-trust-anchors-file ca.crt --identity-issuer-certificate-file issuer.crt --identity-issuer-key-file issuer.key | kubectl apply -f -
 ```
 
-Integrate Openfaas with Linkerd
+Integrate Openfaas with Linkerd (need to wait for Linker do to come up)
 ```
 kubectl -n openfaas get deploy gateway -o yaml | linkerd inject --skip-outbound-ports=4222 - | kubectl apply -f -
 ```
 
 Integrate Nginx Ingress controller with Linkerd
 ```
-kubectl get deploy/nginx-ingress-controller -n ingress-basic -o yaml | linkerd inject - | kubectl apply -f - 
+kubectl get deploy/nginx-ingress-ingress-nginx-controller -n ingress-basic -o yaml | linkerd inject - | kubectl apply -f - 
 ```
 
 Linkerd metrics integration with Prometheus
