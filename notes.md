@@ -169,72 +169,17 @@ Now retrieve the Harbor Registry URL: echo $externalUrl
 And use the following credentials:
 admin
 admin
-```
 
-## MySQL Installation
+```
+## MySQL Installation - Vitess
+```bash
+#Deploy Vitess
+kubectl create ns vitess-system
+kubectl apply -f yml/vitess_operator.yaml -n vitess-system
+kubectl apply -f yml/vitess_cluster.yaml -n vitess-system
 
-Deploy Mysql
-```
-kubectl create ns mysql
-helm install mysql stable/mysql  --set mysqlRootPassword=FTA@CNCF0n@zure3,mysqlUser=ftacncf,mysqlPassword=FTA@CNCF0n@zure3,mysqlDatabase=conexp-mysql,persistence.storageClass=rook-ceph-block -n mysql
-```
-Create the databases 
-```
-kubectl run -n mysql -i --tty ubuntu --image=ubuntu:16.04 --restart=Never -- bash -il
-apt-get update && apt-get install mysql-client -y
-mysql -h mysql -p
-show databases;
-
-CREATE DATABASE conexpweb;
-
-CREATE DATABASE conexpapi;
-USE conexpapi;
-
-CREATE TABLE CostCenters(
-   CostCenterId int(11)  NOT NULL,
-   SubmitterEmail text NOT NULL,
-   ApproverEmail text NOT NULL,
-   CostCenterName text NOT NULL,
-   PRIMARY KEY ( CostCenterId )
-);
-
-INSERT INTO CostCenters (CostCenterId, SubmitterEmail,ApproverEmail,CostCenterName)  values (1, 'user1@mycompany.com', 'user1@mycompany.com','123E42');
-INSERT INTO CostCenters (CostCenterId, SubmitterEmail,ApproverEmail,CostCenterName)  values (2, 'user2@mycompany.com', 'user2@mycompany.com','456C14');
-INSERT INTO CostCenters (CostCenterId, SubmitterEmail,ApproverEmail,CostCenterName)  values (3, 'user3@mycompany.com', 'user3@mycompany.com','456C14');
-
-USE conexpapi;
-GRANT ALL PRIVILEGES ON *.* TO 'ftacncf'@'%';
-
-USE conexpweb;
-GRANT ALL PRIVILEGES ON *.* TO 'ftacncf'@'%';
-```
-
-## Vitess Installation (Note: Either do the SQL Installation as above or Vitess, not both)
-
-Clone the Vitess Git repo
-```
-sudo git clone https://github.com/vitessio/vitess.git 
-```
-Navigate to the following folder:
-```
-~/Vitess/vitess/examples/operator
-```
-Run the following kubectl commands:
-```
-kubectl apply -f operator.yaml 
-
-kubectl apply -f 101_initial_cluster.yaml
-```
-Get the POD running the Vitess (from the pf.sh file):
-```
-kubectl get deployment --selector="planetscale.com/component=vtgate"
-```
-Expose the deploy as a svc, get the service YAML, and edit it/clean it
-To Do: Add the example YAML file.
-
-Install MySQL Client Locally
-```
-apt install mysql-client
+#vgate host random so create known service
+kubectl apply -f yml/mysql-host-service.yaml -n vitess-system
 ```
 
 ## OpenFaaS
@@ -264,14 +209,15 @@ kubectl apply -f yml/openfaas-nats-connector.yaml
 
 ```
 kubectl create ns monitoring
-helm repo add stable https://kubernetes-charts.storage.googleapis.com
-helm install prometheus stable/prometheus-operator -f yml/prometheus-values.yaml -n monitoring
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install prometheus prometheus-community/kube-prometheus-stack -f yml/prometheus-values.yaml -n monitoring --version 13.13.0
 ```
 ```
 kubectl port-forward deploy/prometheus-grafana 8080:3000 -n monitoring
 Browse to http://localhost:8080 and use the username/password as admin/FTA@CNCF0n@zure3
 
-kubectl port-forward svc/prometheus-prometheus-oper-prometheus 9090:9090 -n monitoring
+kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090 -n monitoring 
 Browse to http://localhost:9090
 ```
 
@@ -282,7 +228,7 @@ helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
 helm repo update
 
 kubectl create ns tracing
-helm install jaeger jaegertracing/jaeger -f yml/jaeger-values.yaml -n tracing
+helm install jaeger jaegertracing/jaeger -f yml/jaeger-values.yaml -n tracing --version 0.40.1
 ```
 ```
 # Wait for at least ~5 minutes before browsing to the Jaeger UI

@@ -10,15 +10,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
 namespace Contoso.Expenses.Web
 {
     public class Startup
     {
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         public IConfiguration Configuration { get; }
 
-        public Startup(IHostingEnvironment env)
+        public Startup(IWebHostEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                             .SetBasePath(env.ContentRootPath)
@@ -58,7 +59,7 @@ namespace Contoso.Expenses.Web
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc();
 
             // see https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.2
             string connectionString = Configuration["ConnectionStrings:DBConnectionString"];
@@ -76,11 +77,11 @@ namespace Contoso.Expenses.Web
                 };
             });
 
-            services.AddSingleton<IHostingEnvironment>(_env);
+            services.AddSingleton<IWebHostEnvironment>(_env);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ContosoExpensesWebContext context, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ContosoExpensesWebContext context, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -91,7 +92,7 @@ namespace Contoso.Expenses.Web
                 app.UseExceptionHandler("/Error");
             }
 
-            context.Database.EnsureCreated();
+            context.Database.Migrate();
 
             //app.UseDefaultFiles();
             //app.UseStaticFiles();
