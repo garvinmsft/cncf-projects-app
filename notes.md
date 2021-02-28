@@ -138,6 +138,7 @@ helm repo add harbor https://helm.goharbor.io
 # Install Harbor
 helm install harbor harbor/harbor \
 	--namespace harbor-system \
+  --version 1.6.0 \
 	--set expose.ingress.hosts.core=$registryHost \
   --set expose.tls.secretName=ingress-cert-harbor \
 	--set notary.enabled=false \
@@ -150,42 +151,57 @@ helm install harbor harbor/harbor \
 	--set persistence.persistentVolumeClaim.registry.storageClass=rook-ceph-block \
 	--set persistence.persistentVolumeClaim.chartmuseum.storageClass=rook-ceph-block \
 	--set persistence.persistentVolumeClaim.jobservice.storageClass=rook-ceph-block \
-	--set persistence.persistentVolumeClaim.database.storageClass=rook-ceph-block \
-	--set persistence.persistentVolumeClaim.redis.storageClass=rook-ceph-block 
+	--set persistence.persistentVolumeClaim.database.storageClass=rook-ceph-block
+  
 
 ```
-Update the stateful set permission for the Harbor database so that it will not error on pod restarts
+Patch the database stateful for the Harbor database so it will not error on pod restarts
 ```
-kubectl edit statefulset harbor-harbor-database  -n harbor-system
+kubectl patch statefulset harbor-harbor-database -n harbor-system --patch "$(cat yml/harbor-init-patch.yaml)"
 ```
+Create harbor project and user
+```bash
+#Create conexp project in Harbor
+ curl -u admin:admin -i -k -X POST "$externalUrl/api/v2.0/projects" \
+      -d "@json/harbor-project.json" \
+      -H "Content-Type: application/json"
 
-Update the command on *initContainers* to
+#Create conexp user in Harbor
+ curl -u admin:admin -i -k -X POST "$externalUrl/api/v2.0/users" \
+      -d "@json/harbor-project-user.json" \
+      -H "Content-Type: application/json"
 
-```
-chown -R postgres:postgres /var/lib/postgresql/data; chmod 700 -R /var/lib/postgresql/data
-```
+#Add the conexp user to the conexp project in Harbor
 
+conexpid=$(curl -u admin:admin -k -s -X GET "$externalUrl/api/v2.0/projects?name=conexp" | jq '.[0].project_id')
+echo "project_id: $conexpid"
+
+ curl -u admin:admin -i -k -X POST "$externalUrl/api/v2.0/projects/$conexpid/members" \
+      -d "@json/harbor-project-member.json" \
+      -H "Content-Type: application/json"
 ```
-Now retrieve the Harbor Registry URL: echo $externalUrl
-And use the following credentials:
+Now retrieve the Harbor Registry URL:
+```bash 
+echo $externalUrl
+```
+Use the following credentials to login:\
+admin\
 admin
-admin
 
-```
-## MySQL Installation - Vitess
+## Database Installation - 
 ```bash
 #Deploy Vitess
 kubectl create ns vitess-system
-kubectl apply -f yml/vitess_operator.yaml -n vitess-system
-kubectl apply -f yml/vitess_cluster.yaml -n vitess-system
+kubectl apply -f yml/vitess_operator.yaml
+kubectl apply -f yml/vitess_cluster.yaml
 
-#vgate host random so create known service
+#vgate host is random so create known service
 kubectl apply -f yml/mysql-host-service.yaml -n vitess-system
 ```
 
 ## OpenFaaS
 
-```
+```bash
 helm repo add openfaas https://openfaas.github.io/faas-netes/
 helm repo update
 
@@ -303,7 +319,7 @@ Browse to http://localhost:8080
 ## Tekton
 Install Tekton pipelines
 ```
-kubectl apply -f https://storage.googleapis.com/tekton-releases/latest/release.yaml
+kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.21.0/release.yaml
 
 kubectl apply -f yml/tekton-default-configmap.yaml  -n  tekton-pipelines
 kubectl apply -f yml/tekton-pvc-configmap.yaml -n  tekton-pipelines
@@ -311,11 +327,11 @@ kubectl apply -f yml/tekton-feature-flags-configmap.yaml -n  tekton-pipelines
 ```
 Install Tekton Triggers
 ```
-kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
+kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/previous/v0.11.2/release.yaml
 ```
 Install Tekton Dashboard
 ```
-kubectl apply --filename https://github.com/tektoncd/dashboard/releases/download/v0.5.2/tekton-dashboard-release.yaml
+kubectl apply --filename https://github.com/tektoncd/dashboard/releases/download/v0.14.0/tekton-dashboard-release.yaml
 ```
 ```
 kubectl port-forward svc/tekton-dashboard 8080:9097  -n tekton-pipelines
@@ -324,32 +340,23 @@ Browse to http://localhost:8080
 
 ## App Installation
 
-Create the Project and User in Harbor
-- Login to Harbor
-- Add a new Project with name conexp
-- Add a new User under Administration with username as conexp and password as FTA@CNCF0n@zure3
-- Associate the user with the conexp project under Memebers tab with a Developer role
-
 Build and push the containers
 ```
 docker login $registryHost
 conexp
 FTA@CNCF0n@zure3
 
-cd src/Contoso.Expenses.API
-docker build -t $registryHost/conexp/api:latest .
-# Go to Harbor registry and create **conexp** project
+#Build and push API service
+docker build -t $registryHost/conexp/api:latest src/Contoso.Expenses.API
 docker push $registryHost/conexp/api:latest
 
-cd ..
-docker build -t $registryHost/conexp/web:latest -f Contoso.Expenses.Web/Dockerfile .
+#Build and push web app
+docker build -t $registryHost/conexp/web:latest  -f src/Contoso.Expenses.Web/Dockerfile ./src
 docker push $registryHost/conexp/web:latest
 
-docker build -t $registryHost/conexp/emaildispatcher:latest -f Contoso.Expenses.OpenFaaS/Dockerfile .
+#Build and push email dispatcher
+docker build -t $registryHost/conexp/emaildispatcher:latest  -f src/Contoso.Expenses.OpenFaaS/Dockerfile ./src
 docker push $registryHost/conexp/emaildispatcher:latest
-
-cd ..
-
 ```
 
 ```

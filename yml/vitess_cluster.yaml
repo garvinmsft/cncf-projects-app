@@ -114,13 +114,13 @@ spec:
   updateStrategy:
     type: Immediate
   globalLockserver:
-    etcd:
+    etcd: 
       dataVolumeClaimTemplate:
         storageClassName: rook-ceph-block
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 256Mi
+            storage: 5Gi
 ---
 apiVersion: v1
 kind: Secret
