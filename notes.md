@@ -228,7 +228,9 @@ kubectl apply -f yml/openfaas-nats-connector.yaml
 kubectl create ns monitoring
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-helm install prometheus prometheus-community/kube-prometheus-stack -f yml/prometheus-values.yaml -n monitoring --version 13.13.0
+helm install prometheus prometheus-community/kube-prometheus-stack -f yml/prometheus-values.yaml  \
+  -n monitoring \
+  --version 13.13.0
 ```
 ```
 kubectl port-forward deploy/prometheus-grafana 8080:3000 -n monitoring
@@ -245,7 +247,9 @@ helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
 helm repo update
 
 kubectl create ns tracing
-helm install jaeger jaegertracing/jaeger -f yml/jaeger-values.yaml -n tracing --version 0.40.1
+helm install jaeger jaegertracing/jaeger -f yml/jaeger-values.yaml \
+  -n tracing \
+  --version 0.40.1
 ```
 ```
 # Wait for at least ~5 minutes before browsing to the Jaeger UI
