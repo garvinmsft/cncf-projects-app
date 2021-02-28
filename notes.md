@@ -138,11 +138,11 @@ helm repo add harbor https://helm.goharbor.io
 # Install Harbor
 helm install harbor harbor/harbor \
 	--namespace harbor-system \
-  --version 1.6.0 \
+	--version 1.6.0 \
 	--set expose.ingress.hosts.core=$registryHost \
-  --set expose.tls.secretName=ingress-cert-harbor \
+	--set expose.tls.secretName=ingress-cert-harbor \
 	--set notary.enabled=false \
-  --set trivy.enabled=false \
+	--set trivy.enabled=false \
 	--set expose.ingress.annotations."kubernetes\.io/ingress\.class"=harbor-nginx \
 	--set expose.ingress.annotations."cert-manager\.io/cluster-issuer"=letsencrypt  \
 	--set persistence.enabled=true \
