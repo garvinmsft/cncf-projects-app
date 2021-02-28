@@ -159,7 +159,7 @@ Patch the database stateful for the Harbor database so it will not error on pod 
 ```
 kubectl patch statefulset harbor-harbor-database -n harbor-system --patch "$(cat yml/harbor-init-patch.yaml)"
 ```
-Create harbor project and user
+Confirm harber installed and running then create the harbor project and user
 ```bash
 #Create conexp project in Harbor
  curl -u admin:admin -i -k -X POST "$externalUrl/api/v2.0/projects" \
@@ -192,8 +192,8 @@ admin
 ```bash
 #Deploy Vitess
 kubectl create ns vitess-system
-kubectl apply -f yml/vitess_operator.yaml
-kubectl apply -f yml/vitess_cluster.yaml
+kubectl apply -f yml/vitess_operator.yaml -n vitess-system
+kubectl apply -f yml/vitess_cluster.yaml -n vitess-system
 
 #vgate host is random so create known service
 kubectl apply -f yml/mysql-host-service.yaml -n vitess-system
