@@ -21,7 +21,7 @@ namespace Contoso.Expenses.API.Migrations
                 {
                     table.PrimaryKey("PK_CostCenters", x => x.CostCenterId);
                 });
-                
+
             migrationBuilder.InsertData(
                 table: "CostCenters",
                 columns: new[] { "CostCenterId", "SubmitterEmail", "ApproverEmail", "CostCenterName" },

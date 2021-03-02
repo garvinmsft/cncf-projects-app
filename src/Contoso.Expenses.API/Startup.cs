@@ -75,6 +75,8 @@ namespace Contoso.Expenses.API
                 app.UseDeveloperExceptionPage();
             }
 
+            context.Database.Migrate();
+            
             app.UseHttpsRedirection();
 
             app.UseRouting();
@@ -86,7 +88,6 @@ namespace Contoso.Expenses.API
                 endpoints.MapControllers();
             });
 
-            context.Database.Migrate();
         }
     }
 }

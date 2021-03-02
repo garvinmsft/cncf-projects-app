@@ -64,7 +64,7 @@ namespace Contoso.Expenses.Web
             // see https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.2
             string connectionString = Configuration["ConnectionStrings:DBConnectionString"];
             services.AddDbContext<ContosoExpensesWebContext>(options =>
-                    options.UseMySql(connectionString));
+                    options.UseMySql(connectionString, o => o.MigrationsAssembly("Contoso.Expenses.Common")) );
 
             services.Configure<ConfigValues>(Configuration.GetSection("ConfigValues"));
 

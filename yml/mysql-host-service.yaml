@@ -4,7 +4,7 @@ metadata:
   labels:
     planetscale.com/cluster: vitess-mysql
     planetscale.com/component: vtgate
-  name: vitess-mysql-host
+  name: mysql
 spec:
   ports:
   - name: web
