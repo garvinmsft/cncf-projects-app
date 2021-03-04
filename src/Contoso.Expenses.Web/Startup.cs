@@ -78,6 +78,8 @@ namespace Contoso.Expenses.Web
             });
 
             services.AddSingleton<IWebHostEnvironment>(_env);
+
+            services.AddDataProtection();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
